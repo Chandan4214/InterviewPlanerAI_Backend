@@ -28,7 +28,11 @@ async function registerUserController(req, res) {
     const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET_KEY, {
       expiresIn: "1d",
     });
-    res.cookie("token", token);
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true, // ✅ REQUIRED (HTTPS)
+      sameSite: "None", // ✅ REQUIRED (cross-origin)
+    });
     res.status(201).json({
       message: "User registered successfully",
       user: {
@@ -46,20 +50,23 @@ async function LoginUserController(req, res) {
   if (!email || !password) {
     return res.status(400).json({ message: "All fields are required" });
   }
-  try{
-    const user= await userModel.findOne({email});
-    if(!user){
-      res.status(404).json({message:"User not found"});
+  try {
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
     }
-    const isMatch= await bcrypt.compare(password,user.password);
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      res.status(401).json({message:"Invalid credentials"});
-    }
-    else{
+      res.status(401).json({ message: "Invalid credentials" });
+    } else {
       const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET_KEY, {
         expiresIn: "1d",
       });
-      res.cookie("token", token);
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: true, // ✅ REQUIRED (HTTPS)
+        sameSite: "None", // ✅ REQUIRED (cross-origin)
+      });
       res.status(200).json({
         message: "User logged in successfully",
         token,
@@ -70,55 +77,44 @@ async function LoginUserController(req, res) {
         },
       });
     }
-
-
-  }
-  catch(error){
+  } catch (error) {
     console.error("Error logging in user", error);
   }
 }
 
-
-async function logoutUserController(req,res){
+async function logoutUserController(req, res) {
   const token = req.cookies.token;
-  try{
-    if (token){
-      await tokenBlackListModel.create({token});
+  try {
+    if (token) {
+      await tokenBlackListModel.create({ token });
     }
     res.clearCookie("token");
-    res.status(200).json({message:"User logged out successfully"});
-
-  }
-  catch(error){
+    res.status(200).json({ message: "User logged out successfully" });
+  } catch (error) {
     console.error("Error logging out user", error);
   }
 }
 
-
-async function getMeController(req,res){
-  try{
-    const user= await userModel.findById(req.user._id).select("-password");
+async function getMeController(req, res) {
+  try {
+    const user = await userModel.findById(req.user._id).select("-password");
     console.log("User details fetched:", user);
     res.status(200).json({
-      message:"User details fetched successfully",
-      user:{
-        id:user._id,
-        username:user.username,
-        email:user.email
-      }
-    }
-
-    )
-
-  }
-  catch(error){
+      message: "User details fetched successfully",
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+      },
+    });
+  } catch (error) {
     console.error("Error fetching user details", error);
   }
 }
 
-
-
-
-module.exports = { registerUserController, LoginUserController,
-  logoutUserController,getMeController
- };
+module.exports = {
+  registerUserController,
+  LoginUserController,
+  logoutUserController,
+  getMeController,
+};
