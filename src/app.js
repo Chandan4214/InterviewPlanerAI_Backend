@@ -7,12 +7,16 @@ const cors=require('cors');
 
 app.use(cors({
   origin:"http://localhost:5173",
+  origin:"https://interview-planer-ai-frontend-8q9e.vercel.app",
   credentials:true
 }
 ));
 app.use(express.json());
 app.use(cookieParser());
 
+app.get("/", (req, res) => {
+  res.send("✅ Server is up and running");
+});
 // using all the routes here
 app.use('/api/auth',authRouter);
 app.use('/api/interview',interviewRouter);
