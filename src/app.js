@@ -6,7 +6,7 @@ const cookieParser=require('cookie-parser');
 const cors=require('cors');
 
 app.use(cors({
-  origin:"http://localhost:5173",
+  
   origin:"https://interview-planer-ai-frontend-8q9e.vercel.app",
   credentials:true
 }
