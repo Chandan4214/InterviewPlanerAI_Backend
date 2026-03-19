@@ -30,7 +30,8 @@ async function generateReport(req,res){
   })
   res.status(201).json({
     message:"Interview report generated successfully",
-    report:interviewReport
+    report:interviewReport,
+
   })  
 
 }

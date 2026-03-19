@@ -97,8 +97,32 @@ async function logoutUserController(req, res) {
 
 async function getMeController(req, res) {
   try {
-    const user = await userModel.findById(req.user._id).select("-password");
-    console.log("User details fetched:", user);
+    // Get token from cookie OR header
+    const token =
+      req.cookies.token ||
+      req.headers.authorization?.split(" ")[1];
+
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized - No token" });
+    }
+
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+
+    // Fix: support both id and _id
+    const userId = decoded._id || decoded.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+
+    // Fetch user
+    const user = await userModel.findById(userId).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
     res.status(200).json({
       message: "User details fetched successfully",
       user: {
@@ -107,11 +131,15 @@ async function getMeController(req, res) {
         email: user.email,
       },
     });
+
   } catch (error) {
     console.error("Error fetching user details", error);
+
+    return res.status(401).json({
+      message: "Unauthorized - Invalid or expired token",
+    });
   }
 }
-
 module.exports = {
   registerUserController,
   LoginUserController,
